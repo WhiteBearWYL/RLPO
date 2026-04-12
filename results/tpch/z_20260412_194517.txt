@@ -1,0 +1,36 @@
+================================================================================
+RLPO - Inference Results
+================================================================================
+
+=== Replication State ===
+customer: False
+lineitem: False
+nation: False
+orders: False
+part: False
+partsupp: False
+region: True
+supplier: False
+
+=== Partition State ===
+customer: customer.c_custkey
+lineitem: lineitem.l_partkey
+nation: nation.n_nationkey
+orders: orders.o_orderkey
+part: part.p_partkey
+partsupp: partsupp.ps_partkey
+region: None (Replicated)
+supplier: supplier.s_suppkey
+
+=== Join State ===
+customer.c_custkey <-> orders.o_custkey: False
+lineitem.l_partkey <-> part.p_partkey: False
+lineitem.l_partkey <-> partsupp.ps_partkey: True
+lineitem.l_suppkey <-> partsupp.ps_suppkey: False
+lineitem.l_suppkey <-> supplier.s_suppkey: False
+nation.n_nationkey <-> supplier.s_nationkey: False
+nation.n_regionkey <-> region.r_regionkey: False
+part.p_partkey <-> partsupp.ps_partkey: True
+partsupp.ps_suppkey <-> supplier.s_suppkey: False
+
+================================================================================

@@ -1,0 +1,44 @@
+
+{
+    "NATION": {
+        "REPLICATED": "FALSE",
+        "KEY": "N_NATIONKEY",
+        "REPLICATE_ABLE": "TRUE"
+    },
+    "REGION": {
+        "REPLICATED": "TRUE",
+        "KEY": "NONE",
+        "REPLICATE_ABLE": "TRUE"
+    },
+    "PART": {
+        "REPLICATED": "FALSE",
+        "KEY": "P_PARTKEY",
+        "REPLICATE_ABLE": "FALSE"
+    },
+    "SUPPLIER": {
+        "REPLICATED": "FALSE",
+        "KEY": "S_SUPPKEY",
+        "REPLICATE_ABLE": "FALSE"
+    },
+    "PARTSUPP": {
+        "REPLICATED": "FALSE",
+        "KEY": "PS_PARTKEY",
+        "REPLICATE_ABLE": "FALSE"
+    },
+    "CUSTOMER": {
+        "REPLICATED": "FALSE",
+        "KEY": "C_CUSTKEY",
+        "REPLICATE_ABLE": "FALSE"
+    },
+    "ORDERS": {
+        "REPLICATED": "FALSE",
+        "KEY": "O_ORDERKEY",
+        "REPLICATE_ABLE": "FALSE"
+    },
+    "LINEITEM": {
+        "REPLICATED": "FALSE",
+        "KEY": "L_ORDERKEY",
+        "REPLICATE_ABLE": "FALSE"
+    }
+}
+
