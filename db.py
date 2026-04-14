@@ -22,6 +22,10 @@ def get_explain_analyze_sql(sql: str) -> str:
     Returns:
         SQL content : SQL query string with 'explain analyze'
     """
+    # 确保输入是字符串类型
+    if not isinstance(sql, str):
+        sql = str(sql)
+    
     # Check for 'explain analyze'
     expalin_analyze_pos = sql.lower().find('explain analyze')
     if expalin_analyze_pos != -1:
@@ -51,6 +55,10 @@ def get_explain_sql(sql: str) -> str:
     Returns:
         SQL content : SQL query string with 'explain'
     """
+    # 确保输入是字符串类型
+    if not isinstance(sql, str):
+        sql = str(sql)
+    
     # Check for 'explain'
     explain_pos = sql.lower().find('explain')
     if explain_pos != -1:

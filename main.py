@@ -43,6 +43,7 @@ def setup_environment():
     replication_allowed = training_data["replication_allowed"]
     join_set = training_data["join_set"]
     workload_dict = training_data["workload_dict"]
+    queries = training_data["queries"]
     target_edges = training_data["target_edges"]
     initial_partition = training_data.get("initial_partition", None)
     initial_replication = training_data.get("initial_replication", None)
@@ -75,7 +76,7 @@ def setup_environment():
         "state_encoder": state_encoder,
         "action_encoder": action_encoder,
         "reward_fn": reward_fn,
-        "queries": workload_dict,
+        "queries": queries,
     }
 
 
