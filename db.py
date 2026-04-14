@@ -10,6 +10,7 @@ from psycopg2 import sql
 from config import *
 import statistics
 import re
+import ast
 
 def get_explain_analyze_sql(sql: str) -> str:
     """
@@ -63,6 +64,34 @@ def get_explain_sql(sql: str) -> str:
     else:
         return sql
 
+def get_schema() -> dict:
+    """
+    Read the tpch_schema.txt file and parse it into a dictionary.
+
+    Returns:
+        dict: Dictionary restored from file
+    """
+    file_path = f"./text_material/{WORKLOAD_NAME}/schema.txt"
+        
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            content = file.read().strip()
+
+        # Parse file content into a dictionary
+        schema_dict = ast.literal_eval(content)  # Safely parse to Python dict
+
+        return schema_dict
+
+    except FileNotFoundError:
+        print(f"get_schema() error: File {file_path} not found!")
+        return {}
+    except SyntaxError:
+        print(f"get_schema() error: File {file_path} format invalid, cannot parse to dict!")
+        return {}
+    except Exception as e:
+        print(f"get_schema() unknown error: {e}")
+        return {}
+
 def get_db_dist_keys_reset_sqls(now_dist_keys: dict, schema: dict = get_schema(), f: TextIO = None) -> list:
     """
     Generate SQL statements to reset distribution keys for all tables in the database.
@@ -111,176 +140,176 @@ def extract_alt_dist_keys(server: dict, solution: dict[str, str]) -> bool:
     return len(solution) != 0
 
 
-def get_similar_template(sql_template: str,
-    templates_records: dict[str, dict[str, int | float | list[int]]]) -> str:
-    """
-    Select the most similar query template to the given SQL template from stored records.
+# def get_similar_template(sql_template: str,
+#     templates_records: dict[str, dict[str, int | float | list[int]]]) -> str:
+#     """
+#     Select the most similar query template to the given SQL template from stored records.
 
-    Args:
-        sql_template (str): SQL query template to compare.
-        templates_records (dict): Dictionary containing stored template statistics.
+#     Args:
+#         sql_template (str): SQL query template to compare.
+#         templates_records (dict): Dictionary containing stored template statistics.
 
-    Returns:
-        str: The most similar template, or None if none found.
-    """
-    schema = get_schema()
-    row_counts = get_row_counts_by_file()
-    join_conditions = extract_join_conditions(sql_template, schema)
-    group_attributes = extract_group_by_attributes(sql_template, schema)
-    where_conditions = extract_where_conditions(sql_template, schema)
-    max_score = 0
-    sim_template = ""
+#     Returns:
+#         str: The most similar template, or None if none found.
+#     """
+#     schema = get_schema()
+#     row_counts = get_row_counts_by_file()
+#     join_conditions = extract_join_conditions(sql_template, schema)
+#     group_attributes = extract_group_by_attributes(sql_template, schema)
+#     where_conditions = extract_where_conditions(sql_template, schema)
+#     max_score = 0
+#     sim_template = ""
 
-    for template, temp_dict in templates_records.items():
-        score = 0
-        if template == sql_template:
-            continue
-        for join_condition in join_conditions:
-            if join_condition in temp_dict["join_conditions"]:
-                join_att1 = join_condition[0].upper()
-                row_num1 = next((row_counts[t] for t, attrs in schema.items() if join_att1 in attrs), 0)
-                join_att2 = join_condition[1].upper()
-                row_num2 = next((row_counts[t] for t, attrs in schema.items() if join_att2 in attrs), 0)
-                score += (row_num1 * row_num2)
-        for group_attribute in group_attributes:
-            if group_attribute in temp_dict["group_attributes"]:
-                group_attribute = group_attribute.upper()
-                row_num1 = next((row_counts[t] for t, attrs in schema.items() if group_attribute in attrs), 0)
-                score += row_num1
-        for where_condition in where_conditions:
-            if where_condition in temp_dict["where_conditions"]:
-                where_condition = where_condition.upper()
-                row_num1 = next((row_counts[t] for t, attrs in schema.items() if where_condition in attrs), 0)
-                score += row_num1
-        if score > max_score:
-            max_score = score
-            sim_template = template
-    return sim_template if max_score > 0 else None
-
-
-def get_explain_queries(servers: list[dict], query: QueryStruct) -> list[QueryStruct]:
-    """
-    Generate EXPLAIN query list to obtain query plans under different distribution key configurations.
-
-    Args:
-        servers (list[dict]): List of server configurations.
-        query (QueryStruct): Original query structure.
-
-    Returns:
-        list[QueryStruct]: A list of new QueryStruct objects representing EXPLAIN queries.
-    """
-    explain_queries = []
-    query_worker_id = query.worker_id
-    query_dk_id = servers[query_worker_id]["dist_keys_records_idx"]
-    tested_dist_keys_idx = []
-
-    if not query.need_store:
-        tested_dist_keys_idx.append(query_dk_id)
-
-    for i, server in enumerate(servers):
-        if not server["suspend"] and server["dist_keys_records_idx"] not in tested_dist_keys_idx:
-            new_query = copy.deepcopy(query)
-            new_query.type = QueryTypeEnum.EXPLAIN
-            new_query.id *= -1
-            new_query.dist_keys_idx = server["dist_keys_records_idx"]
-            tested_dist_keys_idx.append(server["dist_keys_records_idx"])
-            new_query.sql = get_explain_sql(query.sql)
-            new_query.worker_id = i
-            explain_queries.append(new_query)
-    return explain_queries
+#     for template, temp_dict in templates_records.items():
+#         score = 0
+#         if template == sql_template:
+#             continue
+#         for join_condition in join_conditions:
+#             if join_condition in temp_dict["join_conditions"]:
+#                 join_att1 = join_condition[0].upper()
+#                 row_num1 = next((row_counts[t] for t, attrs in schema.items() if join_att1 in attrs), 0)
+#                 join_att2 = join_condition[1].upper()
+#                 row_num2 = next((row_counts[t] for t, attrs in schema.items() if join_att2 in attrs), 0)
+#                 score += (row_num1 * row_num2)
+#         for group_attribute in group_attributes:
+#             if group_attribute in temp_dict["group_attributes"]:
+#                 group_attribute = group_attribute.upper()
+#                 row_num1 = next((row_counts[t] for t, attrs in schema.items() if group_attribute in attrs), 0)
+#                 score += row_num1
+#         for where_condition in where_conditions:
+#             if where_condition in temp_dict["where_conditions"]:
+#                 where_condition = where_condition.upper()
+#                 row_num1 = next((row_counts[t] for t, attrs in schema.items() if where_condition in attrs), 0)
+#                 score += row_num1
+#         if score > max_score:
+#             max_score = score
+#             sim_template = template
+#     return sim_template if max_score > 0 else None
 
 
-def get_copy_query(servers, query, template_records) -> QueryStruct:
-    """
-    Generate a COPY_SQL type query targeting a server with a different distribution key configuration.
+# def get_explain_queries(servers: list[dict], query: QueryStruct) -> list[QueryStruct]:
+#     """
+#     Generate EXPLAIN query list to obtain query plans under different distribution key configurations.
 
-    Args:
-        servers (list[dict]): List of server information.
-        query (QueryStruct): Query object to duplicate.
-        template_records (dict): Template records to track tested distribution keys.
+#     Args:
+#         servers (list[dict]): List of server configurations.
+#         query (QueryStruct): Original query structure.
 
-    Returns:
-        QueryStruct | None: A new query for testing another distribution key, or None if unavailable.
-    """
-    diff_dist_keys_workers = get_different_dist_key_workers(servers)
-    query_worker_id = query.worker_id
-    query_dk_id = servers[query_worker_id]["dist_keys_records_idx"]
+#     Returns:
+#         list[QueryStruct]: A list of new QueryStruct objects representing EXPLAIN queries.
+#     """
+#     explain_queries = []
+#     query_worker_id = query.worker_id
+#     query_dk_id = servers[query_worker_id]["dist_keys_records_idx"]
+#     tested_dist_keys_idx = []
 
-    for worker_id in diff_dist_keys_workers:
-        if worker_id == query_worker_id:
-            continue
-        if servers[worker_id]["suspend"]:
-            continue
-        if servers[worker_id]["dist_keys_records_idx"] == query_dk_id:
-            continue
-        if servers[worker_id]["dist_keys_records_idx"] in template_records[query.template]["dist_key_tested_idxs"]:
-            continue
+#     if not query.need_store:
+#         tested_dist_keys_idx.append(query_dk_id)
 
-        new_query = copy.deepcopy(query)
-        new_query.worker_id = worker_id
-        new_query.dist_keys_idx = servers[worker_id]["dist_keys_records_idx"]
-        template_records[query.template]["dist_key_tested_idxs"].append(new_query.dist_keys_idx)
-        new_query.type = QueryTypeEnum.COPY_SQL
-        new_query.id *= -1
-        return new_query
-    return None
+#     for i, server in enumerate(servers):
+#         if not server["suspend"] and server["dist_keys_records_idx"] not in tested_dist_keys_idx:
+#             new_query = copy.deepcopy(query)
+#             new_query.type = QueryTypeEnum.EXPLAIN
+#             new_query.id *= -1
+#             new_query.dist_keys_idx = server["dist_keys_records_idx"]
+#             tested_dist_keys_idx.append(server["dist_keys_records_idx"])
+#             new_query.sql = get_explain_sql(query.sql)
+#             new_query.worker_id = i
+#             explain_queries.append(new_query)
+#     return explain_queries
 
 
-def deal_the_done_sql_query(
-    query: QueryStruct,
-    templates_records: dict[str, dict[str, int | float | list[int]]],
-    sql_template: str,
-    f: TextIO = None
-) -> bool:
-    """
-    Process SQL queries whose state is DONE.
+# def get_copy_query(servers, query, template_records) -> QueryStruct:
+#     """
+#     Generate a COPY_SQL type query targeting a server with a different distribution key configuration.
 
-    Args:
-        query (QueryStruct): SQL query object containing all metadata.
-        templates_records (dict): Template statistics dictionary (see main.py).
-        sql_template (str): The query’s SQL template.
-        f (TextIO): Log file handle.
+#     Args:
+#         servers (list[dict]): List of server information.
+#         query (QueryStruct): Query object to duplicate.
+#         template_records (dict): Template records to track tested distribution keys.
 
-    Returns:
-        bool: True if an LLM should be called next, False otherwise.
-    """
-    if query.state != QueryStateEnum.DONE:
-        print("Control flow error: Non-DONE SQL query passed to deal_the_done_sql_query", file=f, flush=True)
-        return False
-    if query.type not in (QueryTypeEnum.SQL, QueryTypeEnum.COPY_SQL):
-        print("Control flow error: Non-SQL/COPY_SQL query passed to deal_the_done_sql_query", file=f, flush=True)
+#     Returns:
+#         QueryStruct | None: A new query for testing another distribution key, or None if unavailable.
+#     """
+#     diff_dist_keys_workers = get_different_dist_key_workers(servers)
+#     query_worker_id = query.worker_id
+#     query_dk_id = servers[query_worker_id]["dist_keys_records_idx"]
 
-    query_cost_time = round(query.end_time - query.start_time2, 2)
+#     for worker_id in diff_dist_keys_workers:
+#         if worker_id == query_worker_id:
+#             continue
+#         if servers[worker_id]["suspend"]:
+#             continue
+#         if servers[worker_id]["dist_keys_records_idx"] == query_dk_id:
+#             continue
+#         if servers[worker_id]["dist_keys_records_idx"] in template_records[query.template]["dist_key_tested_idxs"]:
+#             continue
 
-    # Update min/max/average execution time statistics
-    if query_cost_time < templates_records[sql_template]["min_time"] or templates_records[sql_template]["min_time"] == -1:
-        templates_records[sql_template]["min_time"] = query_cost_time
-        templates_records[sql_template]["min_time_dist_key_idx"] = query.dist_keys_idx
-    if query_cost_time > templates_records[sql_template]["max_time"]:
-        templates_records[sql_template]["max_time"] = query_cost_time
-        templates_records[sql_template]["max_time_dist_key_idx"] = query.dist_keys_idx
+#         new_query = copy.deepcopy(query)
+#         new_query.worker_id = worker_id
+#         new_query.dist_keys_idx = servers[worker_id]["dist_keys_records_idx"]
+#         template_records[query.template]["dist_key_tested_idxs"].append(new_query.dist_keys_idx)
+#         new_query.type = QueryTypeEnum.COPY_SQL
+#         new_query.id *= -1
+#         return new_query
+#     return None
 
-    if query.type == QueryTypeEnum.SQL:
-        sum_time = templates_records[sql_template]["avg_time"] * templates_records[sql_template]["counts"]
-        sum_time += query_cost_time
-        new_avg_time = round(sum_time / (templates_records[sql_template]["counts"] + 1), 2)
-        templates_records[sql_template]["avg_time"] = new_avg_time
-        templates_records[sql_template]["counts"] += 1
 
-    if query.dist_keys_idx in templates_records[sql_template]["dist_key_times"]:
-        before_avg_time = templates_records[sql_template]["dist_key_avg_time"][query.dist_keys_idx]
-        before_times = templates_records[sql_template]["dist_key_times"][query.dist_keys_idx]
-        templates_records[sql_template]["dist_key_times"][query.dist_keys_idx] += 1
-        templates_records[sql_template]["dist_key_avg_time"][query.dist_keys_idx] = round(
-            (before_avg_time * before_times + query_cost_time) / (before_times + 1), 2
-        )
-    else:
-        templates_records[sql_template]["dist_key_avg_time"][query.dist_keys_idx] = query_cost_time
-        templates_records[sql_template]["dist_key_times"][query.dist_keys_idx] = 1
+# def deal_the_done_sql_query(
+#     query: QueryStruct,
+#     templates_records: dict[str, dict[str, int | float | list[int]]],
+#     sql_template: str,
+#     f: TextIO = None
+# ) -> bool:
+#     """
+#     Process SQL queries whose state is DONE.
 
-    query.state = QueryStateEnum.INITIAL
-    if templates_records[sql_template]["counts"] == 1:
-        return True
+#     Args:
+#         query (QueryStruct): SQL query object containing all metadata.
+#         templates_records (dict): Template statistics dictionary (see main.py).
+#         sql_template (str): The query’s SQL template.
+#         f (TextIO): Log file handle.
+
+#     Returns:
+#         bool: True if an LLM should be called next, False otherwise.
+#     """
+#     if query.state != QueryStateEnum.DONE:
+#         print("Control flow error: Non-DONE SQL query passed to deal_the_done_sql_query", file=f, flush=True)
+#         return False
+#     if query.type not in (QueryTypeEnum.SQL, QueryTypeEnum.COPY_SQL):
+#         print("Control flow error: Non-SQL/COPY_SQL query passed to deal_the_done_sql_query", file=f, flush=True)
+
+#     query_cost_time = round(query.end_time - query.start_time2, 2)
+
+#     # Update min/max/average execution time statistics
+#     if query_cost_time < templates_records[sql_template]["min_time"] or templates_records[sql_template]["min_time"] == -1:
+#         templates_records[sql_template]["min_time"] = query_cost_time
+#         templates_records[sql_template]["min_time_dist_key_idx"] = query.dist_keys_idx
+#     if query_cost_time > templates_records[sql_template]["max_time"]:
+#         templates_records[sql_template]["max_time"] = query_cost_time
+#         templates_records[sql_template]["max_time_dist_key_idx"] = query.dist_keys_idx
+
+#     if query.type == QueryTypeEnum.SQL:
+#         sum_time = templates_records[sql_template]["avg_time"] * templates_records[sql_template]["counts"]
+#         sum_time += query_cost_time
+#         new_avg_time = round(sum_time / (templates_records[sql_template]["counts"] + 1), 2)
+#         templates_records[sql_template]["avg_time"] = new_avg_time
+#         templates_records[sql_template]["counts"] += 1
+
+#     if query.dist_keys_idx in templates_records[sql_template]["dist_key_times"]:
+#         before_avg_time = templates_records[sql_template]["dist_key_avg_time"][query.dist_keys_idx]
+#         before_times = templates_records[sql_template]["dist_key_times"][query.dist_keys_idx]
+#         templates_records[sql_template]["dist_key_times"][query.dist_keys_idx] += 1
+#         templates_records[sql_template]["dist_key_avg_time"][query.dist_keys_idx] = round(
+#             (before_avg_time * before_times + query_cost_time) / (before_times + 1), 2
+#         )
+#     else:
+#         templates_records[sql_template]["dist_key_avg_time"][query.dist_keys_idx] = query_cost_time
+#         templates_records[sql_template]["dist_key_times"][query.dist_keys_idx] = 1
+
+#     query.state = QueryStateEnum.INITIAL
+#     if templates_records[sql_template]["counts"] == 1:
+#         return True
 
 
 

@@ -75,6 +75,7 @@ def setup_environment():
         "state_encoder": state_encoder,
         "action_encoder": action_encoder,
         "reward_fn": reward_fn,
+        "queries": workload_dict,
     }
 
 

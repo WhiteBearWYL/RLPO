@@ -31,7 +31,7 @@ DB_USER = "gpadmin"
 DB_PASSWD = "123456"
 
 # Database name
-DBNAME = "tpch20"
+DBNAME = "tpch5"
 
 """
 训练/推理配置
@@ -45,7 +45,8 @@ DATA_FOLDER = "text_material/tpch"
 LAST_AGENT_PATH = "results/dqn_agent_tpch.pth"
 
 # 运行模式: "offline_train", "online_train", "inference"
-MODE = "offline_train"
+# MODE = "offline_train"
+MODE = "online_train"
 
 # 离线训练配置
 OFFLINE_TRAIN = {
@@ -64,7 +65,7 @@ OFFLINE_TRAIN = {
 
 # 在线训练配置（预留功能）
 ONLINE_TRAIN = {
-    "num_steps": 1000,
+    "num_steps": 800,
     "batch_size": 64,
 }
 
